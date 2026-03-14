@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [needsProfile, setNeedsProfile] = useState(false);
   const [fullName, setFullName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
+  const [department, setDepartment] = useState("Computer Science (CSE)"); // NEW STATE
 
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -84,13 +85,16 @@ export default function Dashboard() {
     e.preventDefault();
     if (!user) return;
 
+    // UPDATED: Now saves the department!
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       email: user.email,
       full_name: fullName,
       roll_number: rollNumber,
+      department: department,
       role: "student",
     });
+
     if (!error) {
       setNeedsProfile(false);
       await fetchMyHistory(user.id);
@@ -160,7 +164,7 @@ export default function Dashboard() {
         {/* Ambient Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none"></div>
 
-        <div className="max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 space-y-6 relative z-10">
+        <div className="max-w-xl w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 space-y-6 relative z-10">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-white tracking-tight">
               System Initialization
@@ -183,19 +187,43 @@ export default function Dashboard() {
                 placeholder="John Doe"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Internal Roll Code
-              </label>
-              <input
-                required
-                type="text"
-                value={rollNumber}
-                onChange={(e) => setRollNumber(e.target.value)}
-                className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white placeholder-slate-600 uppercase transition-all"
-                placeholder="B25 CS B 45"
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Internal Roll Code
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={rollNumber}
+                  onChange={(e) => setRollNumber(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white placeholder-slate-600 uppercase transition-all"
+                  placeholder="B25 CS B 45"
+                />
+              </div>
+
+              {/* NEW: Department Dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">
+                  Assigned Department
+                </label>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white [&>option]:bg-slate-900 transition-all"
+                >
+                  <option>Computer Science (CSE)</option>
+                  <option>Mechanical (ME)</option>
+                  <option>Civil (CE)</option>
+                  <option>Electrical & Electronics (EEE)</option>
+                  <option>Electronics & Comm (ECE)</option>
+                  <option>Chemical (CH)</option>
+                  <option>Architecture (B.Arch)</option>
+                </select>
+              </div>
             </div>
+
             <button
               type="submit"
               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] border border-indigo-500/50"

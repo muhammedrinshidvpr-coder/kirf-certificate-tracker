@@ -2,44 +2,68 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-// Initialize the Supabase client using your environment variables
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
 export default function Home() {
-  // The function that triggers the Google popup
-  const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+  const handleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "http://localhost:3000/dashboard", // Sends them to the dashboard after login
+        redirectTo: `${window.location.origin}/dashboard`,
       },
     });
-
-    if (error) {
-      console.error("Error logging in:", error.message);
-    }
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            KIRF Portal
+    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Ambient Orbs */}
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+      {/* Glassmorphism Login Terminal */}
+      <div className="max-w-md w-full bg-white/5 backdrop-blur-2xl border border-white/10 rounded-3xl p-10 shadow-2xl relative z-10 text-center space-y-10">
+        {/* Animated Security Icon */}
+        <div>
+          <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl mx-auto flex items-center justify-center border border-indigo-500/30 mb-6 shadow-[0_0_30px_rgba(79,70,229,0.2)]">
+            <svg
+              className="w-8 h-8 text-indigo-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+
+          <h1 className="text-3xl font-bold text-white tracking-tight">
+            TKMCE Vault
           </h1>
-          <p className="text-sm text-gray-500 font-medium">
-            TKM College of Engineering • Dept of CSE
+          <p className="text-slate-400 mt-3 font-medium">
+            Centralized Achievement Terminal
           </p>
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <div className="h-px w-8 bg-white/10"></div>
+            <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-mono">
+              TKM College of Engineering
+            </p>
+            <div className="h-px w-8 bg-white/10"></div>
+          </div>
         </div>
 
-        <div className="space-y-4 pt-4">
-          <button
-            onClick={handleGoogleLogin}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-all focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
+        {/* Glowing Google Auth Button */}
+        <button onClick={handleLogin} className="w-full relative group">
+          {/* Hover Glow Effect */}
+          <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-xl blur opacity-20 group-hover:opacity-50 transition duration-500"></div>
+
+          <div className="relative flex items-center justify-center gap-3 bg-slate-900 border border-white/10 text-slate-200 font-semibold py-4 px-6 rounded-xl group-hover:bg-slate-800 group-hover:text-white transition-all shadow-xl">
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -58,14 +82,14 @@ export default function Home() {
                 fill="#EA4335"
               />
             </svg>
-            Continue with TKM Email
-          </button>
+            Authenticate via TKM Directory
+          </div>
+        </button>
 
-          <p className="text-xs text-center text-gray-400 mt-4">
-            Secure tracking system for student certificates and achievements.
-          </p>
-        </div>
+        <p className="text-xs text-slate-600 font-mono">
+          Strictly restricted to verified @tkmce.ac.in credentials.
+        </p>
       </div>
-    </main>
+    </div>
   );
 }
