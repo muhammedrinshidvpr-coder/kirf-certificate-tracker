@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient, type User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import imageCompression from "browser-image-compression"; // NEW: Compression Engine
+import imageCompression from "browser-image-compression";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +27,7 @@ export default function Dashboard() {
   const [needsProfile, setNeedsProfile] = useState(false);
   const [fullName, setFullName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
-  const [department, setDepartment] = useState("Computer Science (CSE)");
+  const [department, setDepartment] = useState(""); // UPDATED: Starts totally empty!
 
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -73,14 +73,12 @@ export default function Dashboard() {
       }
 
       // --- THE STRICT LOOPHOLE FIX ---
-      // Checks if ANY of the required fields are missing
       if (
         !profile ||
         !profile.full_name ||
         !profile.roll_number ||
         !profile.department
       ) {
-        // Pre-fill whatever data they DO have so they don't have to re-type it
         if (profile?.full_name) setFullName(profile.full_name);
         if (profile?.roll_number) setRollNumber(profile.roll_number);
         if (profile?.department) setDepartment(profile.department);
@@ -129,9 +127,9 @@ export default function Dashboard() {
       // --- THE COMPRESSION ENGINE ---
       if (file.type.startsWith("image/")) {
         const options = {
-          maxSizeMB: 0.1, // Forces the image to be around 100 KB
-          maxWidthOrHeight: 1920, // Keeps it HD
-          useWebWorker: true, // Speeds up compression
+          maxSizeMB: 0.1,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
         };
 
         try {
@@ -192,7 +190,6 @@ export default function Dashboard() {
   if (needsProfile) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden text-slate-200">
-        {/* Ambient Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none"></div>
 
         <div className="max-w-xl w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 space-y-6 relative z-10">
@@ -239,17 +236,30 @@ export default function Dashboard() {
                   Assigned Department
                 </label>
                 <select
+                  required
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
                   className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white [&>option]:bg-slate-900 transition-all"
                 >
-                  <option>Computer Science (CSE)</option>
-                  <option>Mechanical (ME)</option>
-                  <option>Civil (CE)</option>
-                  <option>Electrical & Electronics (EEE)</option>
-                  <option>Electronics & Comm (ECE)</option>
-                  <option>Chemical (CH)</option>
-                  <option>Architecture (B.Arch)</option>
+                  {/* UPDATED: Forced empty choice! */}
+                  <option value="" disabled>
+                    Select your branch...
+                  </option>
+                  <option value="Computer Science (CSE)">
+                    Computer Science (CSE)
+                  </option>
+                  <option value="Mechanical (ME)">Mechanical (ME)</option>
+                  <option value="Civil (CE)">Civil (CE)</option>
+                  <option value="Electrical & Electronics (EEE)">
+                    Electrical & Electronics (EEE)
+                  </option>
+                  <option value="Electronics & Comm (ECE)">
+                    Electronics & Comm (ECE)
+                  </option>
+                  <option value="Chemical (CH)">Chemical (CH)</option>
+                  <option value="Architecture (B.Arch)">
+                    Architecture (B.Arch)
+                  </option>
                 </select>
               </div>
             </div>
@@ -269,12 +279,10 @@ export default function Dashboard() {
   // --- FUTURISTIC MAIN DASHBOARD ---
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 relative overflow-hidden">
-      {/* Background Ambient Effects */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-5xl mx-auto space-y-8 relative z-10">
-        {/* Header Glass Panel */}
         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 flex justify-between items-center shadow-xl">
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -293,7 +301,6 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Upload Form Glass Panel */}
         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 shadow-xl">
           <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
             Upload Node
@@ -369,7 +376,6 @@ export default function Dashboard() {
           </form>
         </div>
 
-        {/* Database Readout Panel */}
         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 shadow-xl">
           <h2 className="text-lg font-semibold text-white mb-6">
             Database Readout
@@ -416,7 +422,6 @@ export default function Dashboard() {
                         {new Date(cert.created_at).toLocaleDateString()}
                       </td>
                       <td className="p-4">
-                        {/* Futuristic Neon Badges */}
                         <span
                           className={`px-3 py-1 text-[11px] font-bold tracking-wider rounded-md border 
                           ${
