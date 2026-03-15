@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient, type User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import imageCompression from "browser-image-compression"; // NEW: Compression Engine
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,7 +27,7 @@ export default function Dashboard() {
   const [needsProfile, setNeedsProfile] = useState(false);
   const [fullName, setFullName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
-  const [department, setDepartment] = useState("Computer Science (CSE)"); // NEW STATE
+  const [department, setDepartment] = useState("Computer Science (CSE)");
 
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -85,7 +86,6 @@ export default function Dashboard() {
     e.preventDefault();
     if (!user) return;
 
-    // UPDATED: Now saves the department!
     const { error } = await supabase.from("profiles").upsert({
       id: user.id,
       email: user.email,
@@ -112,13 +112,32 @@ export default function Dashboard() {
     setUploading(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
+      let fileToUpload = file;
+
+      // --- THE COMPRESSION ENGINE ---
+      if (file.type.startsWith("image/")) {
+        const options = {
+          maxSizeMB: 0.1, // Forces the image to be around 100 KB
+          maxWidthOrHeight: 1920, // Keeps it HD
+          useWebWorker: true, // Speeds up compression
+        };
+
+        try {
+          console.log("Compressing image...");
+          fileToUpload = await imageCompression(file, options);
+        } catch (compressError) {
+          console.error("Error compressing image:", compressError);
+        }
+      }
+      // ------------------------------
+
+      const fileExt = fileToUpload.name.split(".").pop();
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("certificates")
-        .upload(filePath, file);
+        .upload(filePath, fileToUpload);
 
       if (uploadError) throw uploadError;
 
@@ -203,7 +222,6 @@ export default function Dashboard() {
                 />
               </div>
 
-              {/* NEW: Department Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">
                   Assigned Department
