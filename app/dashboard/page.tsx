@@ -72,7 +72,19 @@ export default function Dashboard() {
         return;
       }
 
-      if (!profile || !profile.roll_number) {
+      // --- THE STRICT LOOPHOLE FIX ---
+      // Checks if ANY of the required fields are missing
+      if (
+        !profile ||
+        !profile.full_name ||
+        !profile.roll_number ||
+        !profile.department
+      ) {
+        // Pre-fill whatever data they DO have so they don't have to re-type it
+        if (profile?.full_name) setFullName(profile.full_name);
+        if (profile?.roll_number) setRollNumber(profile.roll_number);
+        if (profile?.department) setDepartment(profile.department);
+
         setNeedsProfile(true);
       } else {
         await fetchMyHistory(session.user.id);
