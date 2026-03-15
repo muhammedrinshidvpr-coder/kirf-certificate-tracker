@@ -20,7 +20,7 @@ interface Certificate {
   profiles: {
     full_name: string;
     roll_number: string;
-    department: string; // NEW: Added department to our blueprint
+    department: string;
   } | null;
 }
 
@@ -28,7 +28,7 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adminDept, setAdminDept] = useState(""); // NEW: State to hold HOD's department
+  const [adminDept, setAdminDept] = useState("");
 
   useEffect(() => {
     const fetchAdminData = async () => {
@@ -57,7 +57,6 @@ export default function AdminDashboard() {
       setAdminDept(profile.department);
 
       // 2. THE SORTING HAT: Fetch ONLY certificates for this specific department
-      // We use !inner to force Supabase to filter based on the joined profiles table
       const { data, error } = await supabase
         .from("certificates")
         .select(
@@ -73,7 +72,14 @@ export default function AdminDashboard() {
         .eq("profiles.department", profile.department)
         .order("created_at", { ascending: false });
 
-      if (!error) setCertificates(data || []);
+      // --- THE ALARM SYSTEM ---
+      if (error) {
+        console.error("Database Error:", error.message);
+        alert("System Error: " + error.message);
+      } else {
+        setCertificates(data || []);
+      }
+
       setLoading(false);
     };
 

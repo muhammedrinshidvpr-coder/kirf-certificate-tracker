@@ -27,7 +27,7 @@ export default function Dashboard() {
   const [needsProfile, setNeedsProfile] = useState(false);
   const [fullName, setFullName] = useState("");
   const [rollNumber, setRollNumber] = useState("");
-  const [department, setDepartment] = useState(""); // UPDATED: Starts totally empty!
+  const [department, setDepartment] = useState("");
 
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -72,6 +72,11 @@ export default function Dashboard() {
         return;
       }
 
+      // Load existing profile data into state so the UI can use it
+      if (profile?.full_name) setFullName(profile.full_name);
+      if (profile?.roll_number) setRollNumber(profile.roll_number);
+      if (profile?.department) setDepartment(profile.department);
+
       // --- THE STRICT LOOPHOLE FIX ---
       if (
         !profile ||
@@ -79,10 +84,6 @@ export default function Dashboard() {
         !profile.roll_number ||
         !profile.department
       ) {
-        if (profile?.full_name) setFullName(profile.full_name);
-        if (profile?.roll_number) setRollNumber(profile.roll_number);
-        if (profile?.department) setDepartment(profile.department);
-
         setNeedsProfile(true);
       } else {
         await fetchMyHistory(session.user.id);
@@ -241,7 +242,6 @@ export default function Dashboard() {
                   onChange={(e) => setDepartment(e.target.value)}
                   className="w-full px-4 py-3 bg-black/40 border border-white/10 rounded-xl outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-white [&>option]:bg-slate-900 transition-all"
                 >
-                  {/* UPDATED: Forced empty choice! */}
                   <option value="" disabled>
                     Select your branch...
                   </option>
@@ -289,8 +289,13 @@ export default function Dashboard() {
               <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(79,70,229,1)]"></div>
               Student Terminal
             </h1>
-            <p className="text-sm text-slate-400 mt-1 font-mono">
-              {user?.email}
+            {/* UPDATED: Now shows the department badge! */}
+            <p className="text-sm text-slate-400 mt-1 font-mono flex items-center gap-2">
+              <span>{user?.email}</span>
+              <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
+              <span className="text-indigo-400 font-semibold">
+                {department || "Awaiting Assignment"}
+              </span>
             </p>
           </div>
           <button
