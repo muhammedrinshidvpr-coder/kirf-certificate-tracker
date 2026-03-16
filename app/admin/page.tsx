@@ -41,7 +41,6 @@ export default function AdminDashboard() {
         return;
       }
 
-      // 1. Get the Admin's profile to check their role AND department
       const { data: profile } = await supabase
         .from("profiles")
         .select("role, department")
@@ -53,26 +52,14 @@ export default function AdminDashboard() {
         return;
       }
 
-      // Save the HOD's department to show in the UI
       setAdminDept(profile.department);
 
-      // 2. THE SORTING HAT: Fetch ONLY certificates for this specific department
       const { data, error } = await supabase
         .from("certificates")
-        .select(
-          `
-          *, 
-          profiles!inner (
-            full_name, 
-            roll_number, 
-            department
-          )
-        `,
-        )
+        .select(`*, profiles!inner (full_name, roll_number, department)`)
         .eq("profiles.department", profile.department)
         .order("created_at", { ascending: false });
 
-      // --- THE ALARM SYSTEM ---
       if (error) {
         console.error("Database Error:", error.message);
         alert("System Error: " + error.message);
@@ -137,7 +124,6 @@ export default function AdminDashboard() {
       headers.join(","),
       ...rows.map((row) => row.join(",")),
     ].join("\n");
-
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -155,53 +141,64 @@ export default function AdminDashboard() {
       </div>
     );
 
-  // --- FUTURISTIC ADMIN DASHBOARD UI ---
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 relative overflow-hidden">
-      {/* Background Ambient Effects */}
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-rose-600/10 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
-      <div className="max-w-7xl mx-auto space-y-8 relative z-10">
-        {/* Header Glass Panel */}
-        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 flex justify-between items-center shadow-xl">
+      <div className="max-w-7xl mx-auto space-y-6 md:space-y-8 relative z-10">
+        {/* MOBILE OPTIMIZED HEADER */}
+        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 md:p-6 flex flex-col md:flex-row gap-5 justify-between items-start md:items-center shadow-xl">
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+            <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,1)]"></div>
               HOD Command Center
             </h1>
-            <p className="text-sm text-slate-400 mt-1 font-mono">
-              Directory: <span className="text-indigo-400">{adminDept}</span>
+            <p className="text-sm text-slate-400 mt-2 font-mono">
+              Directory:{" "}
+              <span className="text-indigo-400 block sm:inline mt-1 sm:mt-0">
+                {adminDept}
+              </span>
             </p>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <button
               onClick={exportToCSV}
-              className="px-4 py-2 text-sm font-semibold text-emerald-950 bg-emerald-400 rounded-lg hover:bg-emerald-300 transition-all shadow-[0_0_15px_rgba(52,211,153,0.3)] hover:shadow-[0_0_25px_rgba(52,211,153,0.5)] border border-emerald-300"
+              className="w-full sm:w-auto px-4 py-2.5 text-sm font-semibold text-emerald-950 bg-emerald-400 rounded-lg hover:bg-emerald-300 transition-all shadow-[0_0_15px_rgba(52,211,153,0.3)] hover:shadow-[0_0_25px_rgba(52,211,153,0.5)] border border-emerald-300"
             >
               Export to Excel
             </button>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 text-sm font-medium text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 transition-all"
+              className="w-full sm:w-auto px-4 py-2.5 text-sm font-medium text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg hover:bg-rose-500/20 transition-all"
             >
               Disconnect
             </button>
           </div>
         </div>
 
-        {/* Database Table Panel */}
-        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6 shadow-xl">
-          <div className="overflow-x-auto rounded-xl border border-white/10">
-            <table className="w-full text-left border-collapse">
+        {/* MOBILE OPTIMIZED TABLE (Horizontal Scroll) */}
+        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 md:p-6 shadow-xl">
+          <div className="overflow-x-auto rounded-xl border border-white/10 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent pb-2">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
                 <tr className="bg-white/5 text-slate-300 text-sm border-b border-white/10">
-                  <th className="p-4 font-medium">Operative Info</th>
-                  <th className="p-4 font-medium">Event String</th>
-                  <th className="p-4 font-medium">Classification</th>
-                  <th className="p-4 font-medium">Network Status</th>
-                  <th className="p-4 font-medium text-right">Actions</th>
+                  <th className="p-4 font-medium whitespace-nowrap">
+                    Operative Info
+                  </th>
+                  <th className="p-4 font-medium whitespace-nowrap">
+                    Event String
+                  </th>
+                  <th className="p-4 font-medium whitespace-nowrap">
+                    Classification
+                  </th>
+                  <th className="p-4 font-medium whitespace-nowrap">
+                    Network Status
+                  </th>
+                  <th className="p-4 font-medium text-right whitespace-nowrap">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="text-sm">
@@ -220,7 +217,7 @@ export default function AdminDashboard() {
                       key={cert.id}
                       className="border-b border-white/5 hover:bg-white/5 transition-colors"
                     >
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         <p className="font-medium text-white">
                           {cert.profiles?.full_name || "Unknown"}
                         </p>
@@ -228,10 +225,10 @@ export default function AdminDashboard() {
                           {cert.profiles?.roll_number || "N/A"}
                         </p>
                       </td>
-                      <td className="p-4 text-white font-medium">
+                      <td className="p-4 text-white font-medium whitespace-nowrap">
                         {cert.title}
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         <span className="block text-slate-300">
                           {cert.category}
                         </span>
@@ -239,10 +236,9 @@ export default function AdminDashboard() {
                           {cert.level}
                         </span>
                       </td>
-                      <td className="p-4">
+                      <td className="p-4 whitespace-nowrap">
                         <span
-                          className={`px-3 py-1 text-[11px] font-bold tracking-wider rounded-md border 
-                          ${
+                          className={`px-3 py-1 text-[11px] font-bold tracking-wider rounded-md border ${
                             cert.status === "verified"
                               ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
                               : cert.status === "rejected"
@@ -253,7 +249,7 @@ export default function AdminDashboard() {
                           {cert.status.toUpperCase()}
                         </span>
                       </td>
-                      <td className="p-4 flex gap-3 justify-end items-center">
+                      <td className="p-4 flex flex-col sm:flex-row gap-3 sm:justify-end items-start sm:items-center whitespace-nowrap">
                         <a
                           href={cert.file_url}
                           target="_blank"
@@ -263,7 +259,7 @@ export default function AdminDashboard() {
                           [VIEW]
                         </a>
                         {cert.status === "pending" && (
-                          <div className="flex gap-2 border-l border-white/10 pl-3 ml-2">
+                          <div className="flex gap-2 sm:border-l border-white/10 sm:pl-3 sm:ml-2">
                             <button
                               onClick={() => updateStatus(cert.id, "verified")}
                               className="px-3 py-1.5 text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded hover:bg-emerald-500/20 transition-all"
