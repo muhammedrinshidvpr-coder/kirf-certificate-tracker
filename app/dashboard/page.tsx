@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsProfile, setNeedsProfile] = useState(false);
+  const [isVerified, setIsVerified] = useState(false); // NEW: The Gatekeeper State
 
   // Profile State
   const [fullName, setFullName] = useState("");
@@ -59,51 +60,56 @@ export default function Dashboard() {
     }
   };
 
+  const checkUser = async () => {
+    setLoading(true);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      router.push("/");
+      return;
+    }
+    setUser(session.user);
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
+
+    if (profile?.role === "admin") {
+      router.push("/admin");
+      return;
+    }
+
+    // Pre-fill existing data
+    if (profile?.full_name) setFullName(profile.full_name);
+    if (profile?.roll_number) setRollNumber(profile.roll_number);
+    if (profile?.department) setDepartment(profile.department);
+    if (profile?.phone_number) setPhone(profile.phone_number);
+    if (profile?.semester) setSemester(profile.semester);
+
+    // NEW: Read the security lock
+    if (profile?.is_verified) setIsVerified(profile.is_verified);
+
+    // Strict check for ALL required profile fields
+    if (
+      !profile ||
+      !profile.full_name ||
+      !profile.roll_number ||
+      !profile.department ||
+      !profile.phone_number ||
+      !profile.semester
+    ) {
+      setNeedsProfile(true);
+    } else {
+      await fetchMyHistory(session.user.id);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const checkUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        router.push("/");
-        return;
-      }
-      setUser(session.user);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", session.user.id)
-        .single();
-
-      if (profile?.role === "admin") {
-        router.push("/admin");
-        return;
-      }
-
-      // Pre-fill existing data
-      if (profile?.full_name) setFullName(profile.full_name);
-      if (profile?.roll_number) setRollNumber(profile.roll_number);
-      if (profile?.department) setDepartment(profile.department);
-      if (profile?.phone_number) setPhone(profile.phone_number);
-      if (profile?.semester) setSemester(profile.semester);
-
-      // Strict check for ALL required profile fields
-      if (
-        !profile ||
-        !profile.full_name ||
-        !profile.roll_number ||
-        !profile.department ||
-        !profile.phone_number ||
-        !profile.semester
-      ) {
-        setNeedsProfile(true);
-      } else {
-        await fetchMyHistory(session.user.id);
-      }
-      setLoading(false);
-    };
     checkUser();
   }, [router]);
 
@@ -120,11 +126,12 @@ export default function Dashboard() {
       phone_number: phone,
       semester: semester,
       role: "student",
+      is_verified: false, // Always false on initial creation
     });
 
     if (!error) {
       setNeedsProfile(false);
-      await fetchMyHistory(user.id);
+      checkUser(); // Re-run the check to show the lockout screen
     }
   };
 
@@ -185,7 +192,6 @@ export default function Dashboard() {
 
       alert("Certificate submitted successfully!");
 
-      // Reset Form
       setFile(null);
       setTitle("");
       setInstitution("");
@@ -324,9 +330,9 @@ export default function Dashboard() {
 
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl mt-2 transition-all"
+              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl mt-2 transition-all shadow-lg hover:shadow-indigo-500/30"
             >
-              Save & Continue
+              Save Profile
             </button>
           </form>
         </div>
@@ -334,7 +340,57 @@ export default function Dashboard() {
     );
   }
 
-  // --- ACADEMIC MAIN DASHBOARD ---
+  // --- NEW: THE LOCKOUT SCREEN ---
+  if (!isVerified) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden text-slate-200">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-600/10 rounded-full blur-[100px] pointer-events-none"></div>
+
+        <div className="max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 text-center relative z-10">
+          <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-amber-500/30">
+            <svg
+              className="w-8 h-8 text-amber-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              ></path>
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-white tracking-tight mb-3">
+            Verification Pending
+          </h2>
+          <p className="text-slate-400 text-sm leading-relaxed mb-8">
+            Your profile details have been sent to your Class Advisor for
+            verification. You will be able to upload certificates once your
+            account is approved.
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={checkUser}
+              className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 rounded-xl transition-all border border-white/10"
+            >
+              Refresh Status
+            </button>
+            <button
+              onClick={handleLogout}
+              className="w-full text-rose-400 hover:text-rose-300 font-medium py-3 transition-colors text-sm"
+            >
+              Log Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // --- ACADEMIC MAIN DASHBOARD (Only visible if isVerified === true) ---
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 relative overflow-hidden">
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
@@ -342,10 +398,10 @@ export default function Dashboard() {
 
       <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 relative z-10">
         {/* HEADER */}
-        <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 md:p-6 flex flex-col md:flex-row gap-5 justify-between items-start md:items-center shadow-xl">
+        <div className="bg-white/5 backdrop-blur-lg border border-emerald-500/20 rounded-2xl p-5 md:p-6 flex flex-col md:flex-row gap-5 justify-between items-start md:items-center shadow-xl">
           <div className="w-full">
             <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(79,70,229,1)]"></div>
+              <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,1)]"></div>
               Student Dashboard
             </h1>
             <div className="text-xs md:text-sm text-slate-400 mt-2 font-mono flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
@@ -353,6 +409,10 @@ export default function Dashboard() {
               <span className="hidden sm:block w-1 h-1 bg-slate-600 rounded-full"></span>
               <span className="text-indigo-400 font-semibold">
                 {department} ({semester})
+              </span>
+              <span className="hidden sm:block w-1 h-1 bg-slate-600 rounded-full"></span>
+              <span className="text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 rounded text-[10px] tracking-wider uppercase">
+                Verified Profile
               </span>
             </div>
           </div>
@@ -510,7 +570,7 @@ export default function Dashboard() {
             <button
               disabled={uploading}
               type="submit"
-              className="mt-4 md:mt-6 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-xl transition-all border border-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-4 md:mt-6 w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3.5 rounded-xl transition-all border border-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-indigo-500/30"
             >
               {uploading ? "Uploading Data..." : "Submit Certificate"}
             </button>
