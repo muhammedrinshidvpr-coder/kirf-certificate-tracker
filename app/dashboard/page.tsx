@@ -25,7 +25,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsProfile, setNeedsProfile] = useState(false);
-  const [isVerified, setIsVerified] = useState(false); // NEW: The Gatekeeper State
+  const [isVerified, setIsVerified] = useState(false);
 
   // Profile State
   const [fullName, setFullName] = useState("");
@@ -83,6 +83,13 @@ export default function Dashboard() {
       return;
     }
 
+    // --- THE FIX: ADVISOR TELEPORTER ---
+    if (profile?.role === "advisor" || profile?.role === "senior_advisor") {
+      router.push("/advisor");
+      return;
+    }
+    // -----------------------------------
+
     // Pre-fill existing data
     if (profile?.full_name) setFullName(profile.full_name);
     if (profile?.roll_number) setRollNumber(profile.roll_number);
@@ -90,7 +97,7 @@ export default function Dashboard() {
     if (profile?.phone_number) setPhone(profile.phone_number);
     if (profile?.semester) setSemester(profile.semester);
 
-    // NEW: Read the security lock
+    // Read the security lock
     if (profile?.is_verified) setIsVerified(profile.is_verified);
 
     // Strict check for ALL required profile fields
@@ -126,12 +133,12 @@ export default function Dashboard() {
       phone_number: phone,
       semester: semester,
       role: "student",
-      is_verified: false, // Always false on initial creation
+      is_verified: false,
     });
 
     if (!error) {
       setNeedsProfile(false);
-      checkUser(); // Re-run the check to show the lockout screen
+      checkUser();
     }
   };
 
@@ -213,7 +220,6 @@ export default function Dashboard() {
       </div>
     );
 
-  // --- ACADEMIC ONBOARDING FORM ---
   if (needsProfile) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden text-slate-200">
@@ -340,7 +346,6 @@ export default function Dashboard() {
     );
   }
 
-  // --- NEW: THE LOCKOUT SCREEN ---
   if (!isVerified) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden text-slate-200">
@@ -390,14 +395,12 @@ export default function Dashboard() {
     );
   }
 
-  // --- ACADEMIC MAIN DASHBOARD (Only visible if isVerified === true) ---
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 relative overflow-hidden">
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 relative z-10">
-        {/* HEADER */}
         <div className="bg-white/5 backdrop-blur-lg border border-emerald-500/20 rounded-2xl p-5 md:p-6 flex flex-col md:flex-row gap-5 justify-between items-start md:items-center shadow-xl">
           <div className="w-full">
             <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -424,7 +427,6 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* UPLOAD FORM */}
         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 md:p-6 shadow-xl">
           <h2 className="text-lg font-semibold text-white mb-5">
             Submit New Certificate
@@ -577,7 +579,6 @@ export default function Dashboard() {
           </form>
         </div>
 
-        {/* MY SUBMISSIONS TABLE */}
         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 md:p-6 shadow-xl">
           <h2 className="text-lg font-semibold text-white mb-5">
             My Submissions
