@@ -15,6 +15,7 @@ interface Certificate {
   title: string;
   category: string;
   level: string;
+  achievement: string; // <--- ADD THIS LINE!
   file_url: string;
   status: string;
   created_at: string;
@@ -83,24 +84,19 @@ export default function Dashboard() {
       return;
     }
 
-    // --- THE FIX: ADVISOR TELEPORTER ---
     if (profile?.role === "advisor" || profile?.role === "senior_advisor") {
       router.push("/advisor");
       return;
     }
-    // -----------------------------------
 
-    // Pre-fill existing data
     if (profile?.full_name) setFullName(profile.full_name);
     if (profile?.roll_number) setRollNumber(profile.roll_number);
     if (profile?.department) setDepartment(profile.department);
     if (profile?.phone_number) setPhone(profile.phone_number);
     if (profile?.semester) setSemester(profile.semester);
 
-    // Read the security lock
     if (profile?.is_verified) setIsVerified(profile.is_verified);
 
-    // Strict check for ALL required profile fields
     if (
       !profile ||
       !profile.full_name ||
@@ -154,22 +150,19 @@ export default function Dashboard() {
 
     try {
       let fileToUpload = file;
-
       if (file.type.startsWith("image/")) {
-        const options = {
-          maxSizeMB: 0.1,
-          maxWidthOrHeight: 1920,
-          useWebWorker: true,
-        };
         try {
-          fileToUpload = await imageCompression(file, options);
+          fileToUpload = await imageCompression(file, {
+            maxSizeMB: 0.1,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          });
         } catch (compressError) {
           console.error("Error compressing image:", compressError);
         }
       }
 
-      const fileExt = fileToUpload.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      const fileName = `${Date.now()}.${fileToUpload.name.split(".").pop()}`;
       const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -198,13 +191,11 @@ export default function Dashboard() {
       if (dbError) throw dbError;
 
       alert("Certificate submitted successfully!");
-
       setFile(null);
       setTitle("");
       setInstitution("");
       setStartDate("");
       setEndDate("");
-
       await fetchMyHistory(user.id);
     } catch (error) {
       alert("Error submitting: " + (error as Error).message);
@@ -220,11 +211,11 @@ export default function Dashboard() {
       </div>
     );
 
+  // --- Profile Form and Lockout Screen Omitted for brevity (they remain identical to your previous code) ---
   if (needsProfile) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 relative overflow-hidden text-slate-200">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] pointer-events-none"></div>
-
         <div className="max-w-xl w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 relative z-10">
           <div className="text-center">
             <h2 className="text-2xl font-bold text-white tracking-tight">
@@ -248,7 +239,6 @@ export default function Dashboard() {
                 placeholder="e.g. John Doe"
               />
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">
@@ -294,7 +284,6 @@ export default function Dashboard() {
                 </select>
               </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-1">
@@ -333,7 +322,6 @@ export default function Dashboard() {
                 </select>
               </div>
             </div>
-
             <button
               type="submit"
               className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl mt-2 transition-all shadow-lg hover:shadow-indigo-500/30"
@@ -350,7 +338,6 @@ export default function Dashboard() {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden text-slate-200">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-amber-600/10 rounded-full blur-[100px] pointer-events-none"></div>
-
         <div className="max-w-md w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 text-center relative z-10">
           <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-amber-500/30">
             <svg
@@ -375,7 +362,6 @@ export default function Dashboard() {
             verification. You will be able to upload certificates once your
             account is approved.
           </p>
-
           <div className="flex flex-col gap-3">
             <button
               onClick={checkUser}
@@ -395,12 +381,17 @@ export default function Dashboard() {
     );
   }
 
+  // Split certificates into groups
+  const verifiedCerts = myCertificates.filter((c) => c.status === "verified");
+  const otherCerts = myCertificates.filter((c) => c.status !== "verified");
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 p-4 md:p-8 relative overflow-hidden">
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 relative z-10">
+        {/* HEADER */}
         <div className="bg-white/5 backdrop-blur-lg border border-emerald-500/20 rounded-2xl p-5 md:p-6 flex flex-col md:flex-row gap-5 justify-between items-start md:items-center shadow-xl">
           <div className="w-full">
             <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
@@ -413,10 +404,6 @@ export default function Dashboard() {
               <span className="text-indigo-400 font-semibold">
                 {department} ({semester})
               </span>
-              <span className="hidden sm:block w-1 h-1 bg-slate-600 rounded-full"></span>
-              <span className="text-emerald-400 border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 rounded text-[10px] tracking-wider uppercase">
-                Verified Profile
-              </span>
             </div>
           </div>
           <button
@@ -427,6 +414,56 @@ export default function Dashboard() {
           </button>
         </div>
 
+        {/* VERIFIED CERTIFICATES (THE TROPHY CABINET) */}
+        {verifiedCerts.length > 0 && (
+          <div className="bg-emerald-950/20 backdrop-blur-lg border border-emerald-500/30 rounded-2xl p-5 md:p-6 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+            <h2 className="text-lg font-semibold text-emerald-400 mb-5 flex items-center gap-2">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                ></path>
+              </svg>
+              Verified Achievements
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {verifiedCerts.map((cert) => (
+                <div
+                  key={cert.id}
+                  className="bg-black/40 border border-emerald-500/20 rounded-xl p-4 flex flex-col gap-2 relative overflow-hidden group"
+                >
+                  <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full pointer-events-none transition-transform group-hover:scale-110"></div>
+                  <h3 className="font-bold text-white text-sm truncate pr-4">
+                    {cert.title}
+                  </h3>
+                  <div className="text-xs text-slate-400 font-mono">
+                    {cert.category} • {cert.level}
+                  </div>
+                  <div className="text-xs font-semibold text-emerald-400 mt-1">
+                    {cert.achievement}
+                  </div>
+                  <a
+                    href={cert.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-indigo-400 hover:text-indigo-300 mt-2 inline-flex items-center gap-1 transition-colors"
+                  >
+                    View Document →
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* UPLOAD FORM (Omitted from snippet for space, keeps exactly the same) */}
         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 md:p-6 shadow-xl">
           <h2 className="text-lg font-semibold text-white mb-5">
             Submit New Certificate
@@ -579,9 +616,10 @@ export default function Dashboard() {
           </form>
         </div>
 
+        {/* PENDING / REJECTED TABLE */}
         <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-5 md:p-6 shadow-xl">
           <h2 className="text-lg font-semibold text-white mb-5">
-            My Submissions
+            Pending & Reviewed Submissions
           </h2>
           <div className="overflow-x-auto rounded-xl border border-white/10 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent pb-2">
             <table className="w-full text-left border-collapse min-w-[600px]">
@@ -603,17 +641,17 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {myCertificates.length === 0 ? (
+                {otherCerts.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
                       className="p-12 text-center text-slate-500 font-mono"
                     >
-                      No certificates submitted yet.
+                      No pending or rejected certificates.
                     </td>
                   </tr>
                 ) : (
-                  myCertificates.map((cert) => (
+                  otherCerts.map((cert) => (
                     <tr
                       key={cert.id}
                       className="border-b border-white/5 hover:bg-white/5 transition-colors"
@@ -635,11 +673,9 @@ export default function Dashboard() {
                       <td className="p-4 whitespace-nowrap">
                         <span
                           className={`px-3 py-1 text-[11px] font-bold tracking-wider rounded-md border ${
-                            cert.status === "verified"
-                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
-                              : cert.status === "rejected"
-                                ? "bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-[0_0_10px_rgba(244,63,94,0.2)]"
-                                : "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
+                            cert.status === "rejected"
+                              ? "bg-rose-500/10 text-rose-400 border-rose-500/20 shadow-[0_0_10px_rgba(244,63,94,0.2)]"
+                              : "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.2)]"
                           }`}
                         >
                           {cert.status.toUpperCase()}
