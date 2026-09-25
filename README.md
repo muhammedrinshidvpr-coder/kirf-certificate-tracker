@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KIRF Certificate Tracker
 
-## Getting Started
+**A role-based portal where students upload activity certificates, faculty advisors review them, and admins track approvals across the department.**
 
-First, run the development server:
+---
+
+## The problem
+
+Colleges require students to collect activity points and certificates for graduation. Tracking them usually means paper files or shared spreadsheets, and advisors lose track of what has been submitted and verified.
+
+## The solution
+
+- **Students** upload certificates (stored in Supabase Storage) and see each one's status
+- **Advisors / senior advisors** see the students in their department and approve or reject submissions
+- **Admins** get a department-wide view and can update any certificate's status
+- Each user's role (student, advisor, senior advisor, admin) sends them to the right dashboard after sign-in
+
+## Tech stack
+
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS · Supabase (Auth, Postgres, Storage, RLS)
+
+## Run locally
 
 ```bash
+npm install
+# .env.local: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Requires Supabase tables `profiles` (with `role`, `department`) and `certificates`, and a `certificates` storage bucket.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Author
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Built by [Muhammed Rinshid V P](https://github.com/muhammedrinshidvpr-coder)
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[MIT](./LICENSE)
